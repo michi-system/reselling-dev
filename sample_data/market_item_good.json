@@ -1,0 +1,13 @@
+{
+  "marketplace": "ebay",
+  "market_item_id": "eb-demo-good-01",
+  "category": "audio",
+  "title": "Sony ABC-100 Bluetooth Speaker New in Box",
+  "brand": "Sony",
+  "model_number": "ABC-100",
+  "gtin": "4900000000001",
+  "condition": "new",
+  "price_usd": 189,
+  "shipping_usd": 18,
+  "price_confidence": "trusted"
+}
