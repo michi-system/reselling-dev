@@ -1,0 +1,8 @@
+name = "reselling-ops-ui"
+main = "src/index.js"
+compatibility_date = "2026-02-10"
+
+[vars]
+# Deployed Workerから到達できるFastAPI公開URLを設定してください
+# 例: https://reselling-api.example.com
+BACKEND_BASE_URL = ""

@@ -1,0 +1,98 @@
+# 変更履歴
+
+## 2026-02-10
+- FastAPIベースのMVPを新規構築
+- 仕入れ商品/市場候補/判定パイプラインAPIを実装
+- 一致判定、付属品除外、利益計算を実装
+- E2Eテストを追加
+- 日本語ドキュメント群を新規作成
+- Yahoo/Rakuten/eBayの実APIアダプタを追加
+- `/v1/trial/live` と `scripts/run_live_trial.py` を追加
+- `market_source=mock` フォールバックと `scripts/check_live_connectivity.py` を追加
+- Rakutenの `RAKUTEN_ACCESS_KEY` 対応と `RAKUTEN_APP_ID` 入力誤りヒントを追加
+- Rakuten Ichiba の接続先を新OpenAPIエンドポイントへ変更（legacy endpoint廃止対応）
+- 実API試用の手順をREADMEと運用docに追記
+- 判定ロジックを `rules-v2` に更新（title similarity / margin gate / reject_reason）
+- `GET /v1/analysis/reject-reasons` を追加
+- 人手レビュー機能を追加（`/v1/review/queue`, `/v1/review/{id}`, `/review`）
+- 定期実行機能を追加（`/v1/batch/jobs`, `/v1/batch/jobs/{id}/run`, `/v1/batch/runs`）
+- スケジューラ常駐実行 (`app/services/scheduler.py`) を追加
+- コンプライアンスガードレールを追加（`COMPLIANCE_MODE=warn/strict/off`）
+- `GET /v1/analysis/compliance-risks` を追加
+- アダプタに最小スロットリングを追加（Yahoo/Rakuten/eBay）
+- `strict` モードで `auto_accept` 抑止のテストを追加
+- カテゴリ別マージン閾値 (`CATEGORY_MIN_MARGIN_OVERRIDES`) と最小利益閾値 (`MIN_EXPECTED_PROFIT_JPY`) を判定ロジックへ追加
+- `reject_reason` に `profit_below_threshold` を追加し、判定トレースを拡張
+- テスト実行時に `.env` 依存が出ないよう `tests/conftest.py` で基準環境を固定
+- テストを拡張し合計10件を自動検証
+- Cloudflare Worker運用UIを追加（`cloudflare-ui/`）
+- 1画面で候補抽出/レビュー/分析を実行可能にし、FastAPI APIを `/api/*` でプロキシ
+- Cloudflare UI運用手順を `docs/CLOUDFLARE_UI.md` に追加
+- Cloudflare UIを全面改善（目的説明、操作手順、状況表示を強化）
+- レビュー行にリンク導線を追加（仕入れページ/eBayページ/比較プレビュー）
+- `GET /v1/review/queue` にリンク用フィールドを追加
+- 抽出パラメータの文言を業務向けに改善し、各項目の意味と推奨値をUI上に明示
+- 理由コード表示を日本語ラベル化（見送り理由/規約注意理由）
+- レビュー一覧の描画不具合を修正し、承認/却下ボタンが確実に表示されるよう改善
+- eBayリンク生成を改善（Browse API形式IDから商品詳細URLへ変換）
+- レビューキューでテストデータを既定非表示化（`include_mock=false`）
+- 既存DBのmockデータを削除（source/market/opportunity/reviewの関連分を整理）
+- Cloudflare UIの販売先選択から `Mock` を削除し、実運用での誤操作を防止
+- 候補抽出の大きすぎる入力値を自動調整する仕様に変更（422回避）
+- `source_limit` のAPI受け付け上限を拡張し、実行時にサイト別上限へ正規化
+- `run_pipeline_top_n` は `source_limit` と同値に正規化し、取得分を全件判定（取得だけ溜まる状態を回避）
+- `/v1/trial/live` では `market_limit` も `source_limit` と同値に正規化し、日本/eBay取得件数を同期
+- 候補抽出メトリクスを商品単位表示へ変更（`案件`表現を廃止）
+- `見送り理由（今回）` / `規約注意（今回）` の集計を商品単位に調整
+- スキャン状態管理を追加（`scan_states`）し、`source_cursor/market_cursor` を前進
+- ソース再スキャン履歴を追加（`source_scan_histories`）し、見込みなし商品を一定時間スキップ
+- `scan_cooldown_minutes` を `/v1/trial/live` に追加
+- `GET /v1/analysis/api-usage` を追加（Yahoo/楽天/eBayの直近1時間使用率）
+- Cloudflare UIにAPI使用率ゲージを追加
+- Cloudflare UIの説明をツールチップ中心へ整理し、情報密度を調整
+- eBay `offset` を `limit` の倍数に自動整列し、`errorId:12515` を回避
+- `market_cursor` を実行時の `market_limit` 境界に合わせて整列してから前進するよう修正
+- `source_limit` をYahoo/楽天とも最大100へ統一
+- Rakuten取得を件数オフセット方式に変更し、複数ページをまたいで要求件数ぶん取得
+- `source_items` / `market_items` upsert時の重複レコードを同一IDで集約
+- `/v1/categories/suggestions` を追加（カテゴリ候補のトグル/検索セレクト用）
+- Cloudflare UIのカテゴリUIをコンパクト化（見出し直下トグル + 1セル展開型の検索/リスト選択）
+- API使用率カウントをメモリ保持からDB永続化へ変更（`--reload` 時に0へ戻る問題を修正）
+- SQLiteの相対パスをプロジェクト絶対パスへ正規化し、起動場所差による別DB参照を防止
+- CSVエクスポートAPIを追加（`/v1/export/opportunities.csv`, `/v1/export/reviews.csv`, `/v1/export/api-usage.csv`）
+- Rakuten APIの `page < 100` 制約に合わせて、カーソルを上限内で循環するよう修正（`page must be under 100`対策）
+- USD/JPY為替レートの状態テーブルを追加（`fx_rate_states`）
+- スケジューラで為替を定期更新する処理を追加（既定: 60分ごと）
+- 利益計算が固定値ではなく最新の為替レートを参照するよう更新
+- 為替状態APIを追加（`GET /v1/system/fx-rate`, `POST /v1/system/fx-rate/refresh`）
+- 検索条件ごとの累積サマリを追加（`GET /v1/trial/summary`）
+- Cloudflare UIに `組み合わせ判定（累積）` を追加し、リスク分析を累積集計ベースに変更
+- `組み合わせ判定（累積）` は日次で自動リセット（`SCAN_SUMMARY_RESET_TIMEZONE`, 既定 `Asia/Tokyo`）
+- 累積サマリに `仕入れ件数` と `販売参照件数` を追加
+- Cloudflare UIに `累積内訳` 表示を追加（仕入れ件数 / 販売参照件数 / 判定済み商品数）
+- `次の検索位置` の文言を改善（仕入れ側/販売側を明示、両方完了時メッセージを統一）
+- 旧データで `仕入れ件数/販売参照件数` が未記録な行は、自動補完して表示
+- 仕入れ側カーソルが完了時は、販売側のみの取得を行わず即終了するよう修正
+- 検索条件ごとのカーソルを先頭に戻すAPIを追加（`POST /v1/trial/reset-state`）
+- Cloudflare UIに `先頭から再開` ボタンを追加
+- API使用率の算出を改善（eBayは公式Rate Limits API優先、Yahoo/楽天はローカル抑止設定ベース）
+- API使用率レスポンスに `usage_basis` と `limit_window` を追加
+- API使用率UIを修正（eBayは「観測回数」と「公式上限窓」を分離表示）
+- タイトルから型番を自動抽出して `model_number` を補完（Yahoo / 楽天 / eBay）
+- ライブ試用では型番一致を優先して比較候補を絞り込み（ノイズ比較を削減）
+- `MIN_HUMAN_REVIEW_SCORE` 既定値を `0.40` に調整（要確認に到達しやすく改善）
+- 商品状態推定ロジックを追加（新品/中古/不明をタイトル・状態語から判定）
+- 候補抽出に `item_condition` (`any/new/used`) を追加し、検索時に新品/中古フィルタ指定可能に変更
+- 新品/中古の組み合わせが不一致な比較ペアを判定対象から除外（`condition_pair_mismatch`）
+- `小型品のみ` UI項目を廃止し、`商品状態` セレクトへ置換
+- `POST /v1/trial/reset-state` / `GET /v1/trial/summary` に `item_condition` を追加（条件ごとに検索位置・累積を分離）
+- UIから判定閾値を調整できるように変更（一致度/利益閾値）
+- `GET /v1/system/thresholds` を追加（カテゴリ別の既定閾値取得）
+- `/v1/trial/live` と `/v1/pipeline/run` で `thresholds` オーバーライドを受け付けるよう拡張
+- 人手レビュー一覧に価格比較（仕入れ合計 / eBay価格合計 / 円換算売上）と商品概要（状態/カテゴリ/一致根拠）を直接表示
+- 人手レビュー一覧から「比較」ボタン操作を廃止し、行内のリンクボタンで即確認できる導線へ変更
+- 人手レビュー一覧をテーブル形式からカード形式へ変更（モバイル含む可読性を改善）
+- 人手レビューカードを再配置（価格は各ECカードへ、利益指標は承認/却下カード上部へ）
+- 画面上の冗長な案内文と規約注意リスト表示を削減し、見送り理由中心の表示へ整理
+- 共有反映を1コマンド化するスクリプトを追加（`scripts/deploy_share_ui.sh`）
+- 共有backendトンネル停止用スクリプトを追加（`scripts/stop_share_backend.sh`）
